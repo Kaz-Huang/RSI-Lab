@@ -1,0 +1,19 @@
+{
+  "url": "https://rsi-lab.kaz-1a8.workers.dev",
+  "worker": "rsi-lab",
+  "database": "rsi-lab-mvp",
+  "databaseId": "4522d1c8-e4f4-47d9-b5cc-eed73f2a449e",
+  "deploymentId": "ff5f96e4-ac39-4232-9591-9b53a0d01cd4",
+  "cronUTC": "0 19 * * *",
+  "verified": "2026-09-18",
+  "initialProductionState": "v010; Llama 3.3 70B Workers AI direction released automatically; no pending candidates",
+  "checks": [
+    "9 automated tests passed",
+    "autonomous cycle publishes unique state-generated design directions without a fixed future sequence",
+    "real local D1 concurrent autonomous releases",
+    "production health/auth/state passed after a real autonomous run",
+    "public reading page shows v010 direction and the complete redesign history",
+    "390px and 1440px no horizontal overflow",
+    "browser login/preview/approval flow verified locally"
+  ]
+}

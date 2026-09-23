@@ -1,0 +1,21 @@
+{
+  "name": "rsi-lab-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --port 8787",
+    "build": "node scripts/build.mjs",
+    "test": "node --test test/*.test.mjs",
+    "deploy": "wrangler deploy",
+    "db:local": "wrangler d1 migrations apply DB --local",
+    "db:remote": "wrangler d1 migrations apply DB --remote",
+    "types": "wrangler types"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "latest",
+    "esbuild": "^0.25.0",
+    "miniflare": "5.20260915.0-alpha",
+    "wrangler": "^4.0.0"
+  }
+}

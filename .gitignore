@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.wrangler/
+.dev.vars
+ADMIN-ACCESS.txt
+worker-configuration.d.ts
+test-results/
+.DS_Store

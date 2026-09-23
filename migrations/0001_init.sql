@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS lab_state (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  revision INTEGER NOT NULL DEFAULT 0,
+  data TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS daily_views (
+  day TEXT NOT NULL,
+  version TEXT NOT NULL,
+  count INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY(day, version)
+);
