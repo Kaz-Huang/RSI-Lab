@@ -1,0 +1,32 @@
+{
+  "version": "v005",
+  "createdAt": "2026-09-18T06:19:23.187Z",
+  "reason": "系统生成了一套新的视觉方向",
+  "config": {
+    "textColor": "#235736",
+    "fontSize": 18,
+    "lineHeight": 1.9000000000000001,
+    "design": "adaptive",
+    "theme": {
+      "label": "Adaptive 5894",
+      "layout": "sunset",
+      "bg": "#f2f7f3",
+      "surface": "#fcfdfc",
+      "ink": "#235736",
+      "muted": "#4a7854",
+      "accent": "#27913f",
+      "accentSoft": "#ddeee1",
+      "border": "#cddfd1",
+      "rule": "#c2d6c7",
+      "radius": 32,
+      "articlePadding": 54,
+      "mainWidth": 1074,
+      "heroScale": 1.11,
+      "fontStyle": "mono",
+      "shadow": "soft",
+      "visualKicker": "AUTONOMY / 5894",
+      "visualTitle": "THE PAGE\nKEEPS\nMOVING.",
+      "visualBody": "generated from the current page, its memory and this cycle"
+    }
+  }
+}
