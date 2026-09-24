@@ -100,6 +100,12 @@ async function handle(req, env, ctx) {
     const views = await env.DB.prepare('SELECT SUM(count) AS total FROM daily_views').first();
     return json({ admin, ...state, revision, metrics: measure(current(state).config), views: views?.total || 0 });
   }
+  if (path === '/api/releases' && req.method === 'GET') {
+    const { state } = await readState(env.DB);
+    // Expose only immutable public design snapshots so the GitHub sync job can
+    // archive each published release without exposing runs, memory, or audit data.
+    return json({ releases: state.versions.filter(v => v.previousVersion).map(({ id, config, createdAt, reason }) => ({ id, config, createdAt, reason })) });
+  }
   if (path === '/api/export' && req.method === 'GET') {
     if (!await isAdmin(req, env)) fail('请先登录。', 401);
     return json({ exportedAt: new Date().toISOString(), ...(await readState(env.DB)) }, 200, { 'Content-Disposition': 'attachment; filename="rsi-lab-evidence.json"' });
