@@ -1,0 +1,32 @@
+{
+  "version": "v015",
+  "createdAt": "2026-09-22T19:01:46.767Z",
+  "reason": "系统上下一个新的视野方向",
+  "config": {
+    "textColor": "#234957",
+    "fontSize": 16,
+    "lineHeight": 1.9,
+    "design": "adaptive",
+    "theme": {
+      "label": "Adaptive 2388",
+      "layout": "signal",
+      "bg": "#f2f7f7",
+      "surface": "#fcfdfd",
+      "ink": "#234957",
+      "muted": "#4a7278",
+      "accent": "#278391",
+      "accentSoft": "#ddecee",
+      "border": "#cddddf",
+      "rule": "#c2d3d6",
+      "radius": 10,
+      "articlePadding": 36,
+      "mainWidth": 888,
+      "heroScale": 0.95,
+      "fontStyle": "serif",
+      "shadow": "soft",
+      "visualKicker": "AUTONOMY / 2388",
+      "visualTitle": "THE PAGE\nKEEPS\nMOVING.",
+      "visualBody": "generated from the current page, its memory and this cycle"
+    }
+  }
+}
