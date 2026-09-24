@@ -166,7 +166,10 @@ export default {
       if (env.FORUM_URL) {
         try { await publishCurrentEvolution(env); }
         catch (error) { console.error('forum_evolution_publish_failed', error.message); }
-        try { await publishForumReplies(env, env.AI); }
+        try {
+          const postedReplies = await publishForumReplies(env, env.AI);
+          console.info(JSON.stringify({ event: 'forum_reply_cycle_complete', repliesPosted: postedReplies.length }));
+        }
         catch (error) { console.error('forum_reply_cycle_failed', error.message); }
       }
     })().catch(error => {

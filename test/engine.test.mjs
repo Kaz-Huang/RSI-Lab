@@ -61,10 +61,10 @@ test('Workers AI proposal is accepted when it returns a new theme JSON', async (
   let prompt = '';
   const ai = { run: async (_model, input) => {
     prompt = input.prompt;
-    return { response: JSON.stringify({
+    return { choices: [{ message: { role: 'assistant', content: JSON.stringify({
       title: 'AI 重新安排了阅读空间', hypothesis: '模型根据历史版本生成新的结构与色彩。', textColor: '#263c55', fontSize: 17, lineHeight: 1.85,
       theme: { label: 'AI Tide', layout: 'cobalt', bg: '#edf4fb', surface: '#ffffff', ink: '#263c55', muted: '#5e7188', accent: '#2768a8', accentSoft: '#dcecff', border: '#c9dced', rule: '#bfd2e5', radius: 22, articlePadding: 46, mainWidth: 1020, heroScale: 1.12, fontStyle: 'sans', shadow: 'soft', visualKicker: 'AI / TIDE', visualTitle: 'MAKE ROOM\nFOR CLARITY.', visualBody: 'an original direction from the current state' }
-    }) };
+    }) } }] };
   } };
   const run = await autonomousCycleAsync(s, 'ai-00000001', 'cron', ai, [{ author: 'Kiro', body: 'Check mobile reading completion before changing the layout.', replies: [] }]);
   assert.equal(run.status, 'released');

@@ -19,6 +19,7 @@ const jsonResponse = (value, status = 200) => new Response(JSON.stringify(value)
 
 test('forum reply candidates include new peer turns, skip answered threads, and stay bounded', () => {
   const posts = [
+    post('test-post', 'Tester', '1111', 9),
     post('answered', 'Kiro', 'earlier note', 1, [reply('a1', 'RSI-Lab Agent', 'thanks', 2)]),
     post('new-reply', 'RSI-Lab Agent', 'release notes', 3, [reply('b1', 'Kiro', 'try measuring the result', 4)]),
     post('new-post', 'Kiro', 'a new idea', 5),
@@ -30,6 +31,21 @@ test('forum reply candidates include new peer turns, skip answered threads, and 
   assert.deepEqual(candidates.map(thread => thread.postId), ['fourth', 'later-post', 'new-post']);
   assert.equal(candidates.some(thread => thread.postId === 'answered'), false);
   assert.equal(candidates.some(thread => thread.postId === 'new-reply'), false);
+  assert.equal(candidates.some(thread => thread.postId === 'test-post'), false);
+});
+
+test('forum reply drafting retries once when the model returns an empty reply list', async () => {
+  let calls = 0;
+  const ai = { run: async () => {
+    calls++;
+    const content = calls === 1
+      ? JSON.stringify({ replies: [] })
+      : JSON.stringify({ replies: [{ postId: 'peer-thread', body: '你提到要先观察移动端阅读完成率；这能帮助区分版式变化与配色变化的影响。你们目前有可比较的基线吗？' }] });
+    return { choices: [{ message: { role: 'assistant', content } }] };
+  } };
+  const drafts = await draftForumReplies(ai, [post('peer-thread', 'Kiro', '移动端阅读完成率能说明版式变化是否有效。', 10)]);
+  assert.equal(calls, 2);
+  assert.equal(drafts[0].postId, 'peer-thread');
 });
 
 test('peer learning context excludes the site agent own replies and bounds forum text', () => {
@@ -50,16 +66,18 @@ test('model replies can address only supplied threads and are plain bounded text
   let prompt = '';
   const ai = { run: async (_model, input) => {
     prompt = input.prompt;
-    return { response: JSON.stringify({ replies: [
+    return { choices: [{ message: { role: 'assistant', content: JSON.stringify({ replies: [
       { postId: 'peer-thread', body: 'A concrete reply.' },
       { postId: 'unknown-thread', body: 'Do not publish this.' },
       { postId: 'peer-thread', body: 'A duplicate.' }
-    ] }) };
+    ] }) } }] };
   } };
   const drafts = await draftForumReplies(ai, [post('peer-thread', 'Kiro', 'What should we measure?', 10)]);
   assert.deepEqual(drafts, [{ postId: 'peer-thread', body: 'A concrete reply.' }]);
-  assert.match(prompt, /untrusted data/);
+  assert.match(prompt, /untrusted discussion content/);
   assert.match(prompt, /RSI-Lab's autonomous website agent/);
+  assert.match(prompt, /Do not return an empty list/);
+  assert.match(prompt, /exactly one object/);
 });
 
 test('forum agent refreshes before replying and uses the RSI-Lab identity', async () => {
@@ -72,7 +90,7 @@ test('forum agent refreshes before replying and uses the RSI-Lab identity', asyn
     posts[0].replies.push({ id: 'agent-reply', post_id: 'peer-thread', ...added, created_at: at(11) });
     return jsonResponse({ ok: true, id: 'agent-reply' }, 201);
   };
-  const ai = { run: async () => ({ response: JSON.stringify({ replies: [{ postId: 'peer-thread', body: 'I will compare reading completion and contrast before drawing a conclusion.' }] }) }) };
+  const ai = { run: async () => ({ choices: [{ message: { role: 'assistant', content: JSON.stringify({ replies: [{ postId: 'peer-thread', body: 'I will compare reading completion and contrast before drawing a conclusion.' }] }) } }] }) };
   const sent = await publishForumReplies({ FORUM_URL: 'https://forum.test' }, ai, fetcher);
   assert.deepEqual(sent, ['peer-thread']);
   assert.equal(requests.filter(request => request.init.method === 'POST').length, 1);
