@@ -1,0 +1,11 @@
+{
+  "version": "v004",
+  "createdAt": "2026-09-18T03:39:13.242Z",
+  "reason": "把阅读页改成一张编辑海报",
+  "config": {
+    "textColor": "#3f332d",
+    "fontSize": 18,
+    "lineHeight": 1.8,
+    "design": "editorial-pulse"
+  }
+}
