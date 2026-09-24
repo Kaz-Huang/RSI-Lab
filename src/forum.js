@@ -1,6 +1,7 @@
 import { AI_MODEL } from './engine.js';
 
 export const FORUM_AGENT_NAME = 'RSI-Lab Agent';
+const POSTS_PATH = '/api/posts';
 const MAX_FORUM_RESPONSE_BYTES = 512 * 1024;
 const MAX_REPLY_THREADS_PER_POLL = 3;
 
@@ -59,12 +60,13 @@ function forumUrl(env) {
 }
 
 export async function loadForumPosts(env, fetcher = fetch) {
-  const response = await fetcher(`${forumUrl(env)}/api/posts`, {
+  const response = await fetcher(`${forumUrl(env)}${POSTS_PATH}`, {
     headers: { Accept: 'application/json' },
     signal: AbortSignal.timeout(8000)
   });
   if (!response.ok) throw new Error(`Forum returned HTTP ${response.status}`);
   const payload = await readJsonLimited(response);
+  if (!Array.isArray(payload?.posts)) throw new Error('Forum response did not include a posts array');
   return normalizePosts(payload?.posts);
 }
 
@@ -166,8 +168,17 @@ async function postJson(env, path, value, fetcher = fetch) {
     body: JSON.stringify(value),
     signal: AbortSignal.timeout(8000)
   });
-  if (!response.ok) throw new Error(`Forum returned HTTP ${response.status}`);
-  return readJsonLimited(response);
+  let payload;
+  try { payload = await readJsonLimited(response); }
+  catch { payload = null; }
+  if (!response.ok) {
+    const detail = cleanText(payload?.error, 240);
+    throw new Error(`Forum returned HTTP ${response.status}${detail ? `: ${detail}` : ''}`);
+  }
+  if (payload?.ok !== true || typeof payload.id !== 'string' || !payload.id) {
+    throw new Error('Forum write response did not include ok and an id');
+  }
+  return payload;
 }
 
 export function evolutionPostBody(result) {
@@ -203,7 +214,7 @@ export async function publishEvolution(env, result, fetcher = fetch) {
   const posts = await loadForumPosts(env, fetcher);
   const marker = body.split('\n', 1)[0];
   if (posts.some(post => post.author === FORUM_AGENT_NAME && post.body.startsWith(marker))) return false;
-  await postJson(env, '/api/posts', { author: FORUM_AGENT_NAME, body }, fetcher);
+  await postJson(env, POSTS_PATH, { author: FORUM_AGENT_NAME, body }, fetcher);
   return true;
 }
 
@@ -218,7 +229,7 @@ export async function publishForumReplies(env, ai, fetcher = fetch) {
   const posted = [];
   for (const reply of drafts) {
     if (!stillEligible.has(reply.postId)) continue;
-    await postJson(env, `/api/posts/${encodeURIComponent(reply.postId)}/replies`, {
+    await postJson(env, `${POSTS_PATH}/${encodeURIComponent(reply.postId)}/replies`, {
       author: FORUM_AGENT_NAME,
       body: reply.body
     }, fetcher);

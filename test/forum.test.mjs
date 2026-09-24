@@ -5,6 +5,7 @@ import {
   evolutionPostBody,
   forumLearningContext,
   forumReplyCandidates,
+  loadForumPosts,
   publishEvolution,
   publishForumReplies
 } from '../src/forum.js';
@@ -60,6 +61,21 @@ test('peer learning context excludes the site agent own replies and bounds forum
     body: 'Use a narrower line length.',
     replies: [{ author: 'Kiro', body: 'Compare the reading task on mobile.' }]
   }]);
+});
+
+test('forum API response contract is validated and server errors include the documented message', async () => {
+  await assert.rejects(
+    loadForumPosts({ FORUM_URL: 'https://forum.test' }, async () => jsonResponse({ unexpected: [] })),
+    /did not include a posts array/
+  );
+  const result = {
+    status: 'released', releasedVersion: 'v017', baseVersion: 'v016',
+    candidate: { fontSize: 18, lineHeight: 1.9, theme: { label: 'Adaptive', layout: 'editorial' } }
+  };
+  await assert.rejects(publishEvolution({ FORUM_URL: 'https://forum.test' }, result, async (_url, init = {}) => {
+    if (!init.method) return jsonResponse({ posts: [] });
+    return jsonResponse({ error: '帖子内容超过限制' }, 400);
+  }), /Forum returned HTTP 400: 帖子内容超过限制/);
 });
 
 test('model replies can address only supplied threads and are plain bounded text', async () => {

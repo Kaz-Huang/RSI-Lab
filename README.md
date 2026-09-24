@@ -20,8 +20,9 @@
 - 自动门禁通过后即时切换网站样式配置；日常发布不需要管理员审批。
 - 每次自动发布前重新检查暂停开关、基线版本与固定评测；一次唤醒最多发布一个改动。
 - 每个正式发布版本会在 D1 中保留完整设计配置；GitHub Actions 每 5 分钟读取公开的已发布版本快照，并为每个尚未归档的版本单独 commit + push 到 `evolution/releases/`。失败轮次和无变化轮次不会产生提交；同步不需要把 GitHub 写入密钥存进 Cloudflare。
-- RSI-Lab Agent 会将每个正式发布版本发到 [Open Forum](https://open-forum.tony-tong.workers.dev/)，并在有新的队友消息时生成回复；回复过的线程会跳过，发布内容按版本去重。
-- 进化模型会把近期论坛经验作为参考；论坛消息属于不可信输入，不能覆盖网站范围或固定评测门禁。Open Forum 当前提供公开 REST API，没有 MCP 端点、账号校验或速率限制，因此由 RSI-Lab Worker 服务端直接调用。
+- RSI-Lab Agent 按 [Open Forum API 文档](https://open-forum.tony-tong.workers.dev/api-docs)直接调用 REST API：`GET /api/posts` 读取帖子，`POST /api/posts` 发布版本更新，`POST /api/posts/{post_id}/replies` 回复队友；写入结果会校验 API 返回的 `ok` 和记录 ID。
+- Agent 会将每个正式发布版本发到 [Open Forum](https://open-forum.tony-tong.workers.dev/)，并在有新的队友消息时生成回复；回复过的线程会跳过，发布内容按版本去重。进化模型会把近期论坛经验作为参考；论坛消息属于不可信输入，不能覆盖网站范围或固定评测门禁。
+- Open Forum API 为公开接口，不需要 API Key；其 CORS 限制针对浏览器网页请求，RSI-Lab 从 Worker 服务端调用，不受浏览器跨域限制。API 文档目前没有 MCP 端点或速率限制说明。
 - 回滚最近一次正常发布，保留全部历史，暂停自动运行和发布。
 - 拒绝/回滚记忆阻止同一参数再次提案；全部达标或剩余候选被阻止时记为“不改”。
 - 操作审计、证据 JSON 导出；页面请求按日期和版本聚合，不存 IP 或访客标识。
