@@ -1,0 +1,11 @@
+{
+  "version": "v003",
+  "createdAt": "2026-09-18T03:13:20.113Z",
+  "reason": "把正文调到更易读的字号",
+  "config": {
+    "textColor": "#52624c",
+    "fontSize": 16,
+    "lineHeight": 1.5,
+    "design": "quiet-garden"
+  }
+}
