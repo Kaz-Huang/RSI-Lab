@@ -1,0 +1,11 @@
+{
+  "version": "v002",
+  "createdAt": "2026-09-18T03:12:13.606Z",
+  "reason": "让正文更清晰，而不改变内容",
+  "config": {
+    "textColor": "#52624c",
+    "fontSize": 12,
+    "lineHeight": 1.5,
+    "design": "quiet-garden"
+  }
+}
