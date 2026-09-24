@@ -6,6 +6,7 @@
   "compatibility_flags": ["nodejs_compat"],
   "account_id": "1a89f6ca91133a6ef17858cc713456f9",
   "workers_dev": true,
+  "vars": { "FORUM_URL": "https://open-forum.tony-tong.workers.dev" },
   "observability": { "enabled": true, "head_sampling_rate": 1 },
   "ai": { "binding": "AI" },
   "d1_databases": [{
@@ -14,6 +15,6 @@
     "database_id": "4522d1c8-e4f4-47d9-b5cc-eed73f2a449e",
     "migrations_dir": "migrations"
   }],
-  "triggers": { "crons": ["0 19 * * *"] },
+  "triggers": { "crons": ["0 19 * * *", "5,35 * * * *"] },
   "rules": [{ "type": "Text", "globs": ["**/*.html", "**/*.css"], "fallthrough": true }]
 }

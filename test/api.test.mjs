@@ -33,6 +33,8 @@ test('Worker + real local D1: auth, CSRF, autonomous releases, preview and rollb
     const approvals = await Promise.all([req('/api/decision', { id: run.id, action: 'approve' }), req('/api/decision', { id: run.id, action: 'approve' })]);
     assert.deepEqual(approvals.map(x => x.status).sort(), [409, 409]);
     assert.equal((await req('/api/rollback', {})).status, 200);
+    const archivedReleases = await (await req('/api/releases')).json();
+    assert.deepEqual(archivedReleases.releases.map(release => release.id), ['v002', 'v003', 'v004']);
     const restored = await (await req('/site')).text(); assert.match(restored, /线上版本 · v004/); assert.match(restored, /font-size:(16|17|18|19)px/); assert.match(restored, /Adaptive/);
     state = await (await req('/api/state')).json(); assert.equal(state.paused, true); assert.equal(state.versions.length, 4);
     const pausedRun = await req('/api/runs', { requestId: 'request-0003' });

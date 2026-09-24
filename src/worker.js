@@ -3,6 +3,7 @@ import dashboardCss from './dashboard.css';
 import { initialState, current, normalizeState, autonomousCycleAsync, decide, rollback, setPaused } from './engine.js';
 import { measure } from './evaluator.js';
 import { sitePage } from './site.js';
+import { forumLearningContext, loadForumPosts, publishEvolution, publishForumReplies } from './forum.js';
 
 const headers = { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'same-origin', 'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'self'" };
 const json = (value, status = 200, extra = {}) => new Response(JSON.stringify(value), { status, headers: { ...headers, 'Content-Type': 'application/json; charset=utf-8', ...extra } });
@@ -49,6 +50,32 @@ async function body(req) {
   const buffer = new Uint8Array(length); let offset = 0; for (const chunk of chunks) { buffer.set(chunk, offset); offset += chunk.length; }
   try { return JSON.parse(new TextDecoder().decode(buffer)); } catch { fail('JSON 格式错误。', 400); }
 }
+async function forumLearnings(env) {
+  if (!env.FORUM_URL) return [];
+  try { return forumLearningContext(await loadForumPosts(env)); }
+  catch (error) { console.error('forum_learning_fetch_failed', error.message); return []; }
+}
+function queueEvolutionPost(result, env, ctx) {
+  if (!env.FORUM_URL) return;
+  const isRelease = result?.status === 'released';
+  const isRollback = /^v\d{3,}$/.test(result?.id || '') && result?.config;
+  if (isRelease || isRollback) ctx.waitUntil(publishEvolution(env, result).catch(error => {
+    console.error('forum_evolution_publish_failed', error.message);
+  }));
+}
+async function publishCurrentEvolution(env) {
+  if (!env.FORUM_URL) return false;
+  const { state } = await readState(env.DB);
+  const version = current(state);
+  if (!version?.previousVersion) return false;
+  const run = state.runs.find(item => item.id === version.runId);
+  return publishEvolution(env, {
+    status: 'released', releasedVersion: version.id, baseVersion: version.previousVersion,
+    candidate: version.config, title: run?.title || version.reason,
+    hypothesis: run?.change?.hypothesis || version.reason,
+    generator: run?.generator || (version.releaseMode === 'rollback' ? 'rollback' : undefined)
+  });
+}
 async function handle(req, env, ctx) {
   const url = new URL(req.url), path = url.pathname;
   if (path === '/health') return json({ ok: true, app: 'rsi-lab', version: '0.1.0' });
@@ -84,14 +111,23 @@ async function handle(req, env, ctx) {
     if (!await isAdmin(req, env)) fail('请先输入管理密钥。', 401);
     if (path === '/api/runs') {
       if (typeof input.requestId !== 'string' || !/^[a-zA-Z0-9-]{8,80}$/.test(input.requestId)) fail('无效请求标识。', 400);
-      return json(await mutate(env.DB, s => autonomousCycleAsync(s, input.requestId, 'manual', env.AI)));
+      const learnings = await forumLearnings(env);
+      const result = await mutate(env.DB, s => autonomousCycleAsync(s, input.requestId, 'manual', env.AI, learnings));
+      queueEvolutionPost(result, env, ctx);
+      return json(result);
     }
     if (path === '/api/decision') {
       if (!['approve', 'reject'].includes(input.action) || typeof input.id !== 'string' || (input.note !== undefined && typeof input.note !== 'string')) fail('无效审批请求。', 400);
-      return json(await mutate(env.DB, s => decide(s, input.id, input.action, input.note || '')));
+      const result = await mutate(env.DB, s => decide(s, input.id, input.action, input.note || ''));
+      queueEvolutionPost(result, env, ctx);
+      return json(result);
     }
     if (path === '/api/pause') return json(await mutate(env.DB, s => { setPaused(s, input.paused); return { paused: s.paused }; }));
-    if (path === '/api/rollback') return json(await mutate(env.DB, s => rollback(s)));
+    if (path === '/api/rollback') {
+      const result = await mutate(env.DB, s => rollback(s));
+      queueEvolutionPost(result, env, ctx);
+      return json(result);
+    }
   }
   if (path === '/api/state' && req.method === 'GET') {
     const admin = await isAdmin(req, env);
@@ -118,9 +154,24 @@ export default {
     catch (e) { if (!e.status) console.error('request_failed', e.message); return json({ error: e.status ? e.message : '服务暂时不可用，请稍后重试。' }, e.status || 500); }
   },
   async scheduled(event, env, ctx) {
-    const date = new Date(event.scheduledTime).toISOString().slice(0, 10);
-    ctx.waitUntil(mutate(env.DB, s => {
-      return autonomousCycleAsync(s, `cron-${date}`, 'cron', env.AI);
-    }).catch(e => { console.error('scheduled_failed', e.message); throw e; }));
+    const evolutionCron = '0 19 * * *';
+    const forumCron = '5,35 * * * *';
+    if (![evolutionCron, forumCron].includes(event.cron)) return;
+    ctx.waitUntil((async () => {
+      if (event.cron === evolutionCron) {
+        const date = new Date(event.scheduledTime).toISOString().slice(0, 10);
+        const learnings = await forumLearnings(env);
+        await mutate(env.DB, s => autonomousCycleAsync(s, `cron-${date}`, 'cron', env.AI, learnings));
+      }
+      if (env.FORUM_URL) {
+        try { await publishCurrentEvolution(env); }
+        catch (error) { console.error('forum_evolution_publish_failed', error.message); }
+        try { await publishForumReplies(env, env.AI); }
+        catch (error) { console.error('forum_reply_cycle_failed', error.message); }
+      }
+    })().catch(error => {
+      console.error('scheduled_failed', error.message);
+      throw error;
+    }));
   }
 };
