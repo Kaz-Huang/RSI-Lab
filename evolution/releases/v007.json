@@ -1,0 +1,32 @@
+{
+  "version": "v007",
+  "createdAt": "2026-09-18T06:28:52.569Z",
+  "reason": "老人与海",
+  "config": {
+    "textColor": "#455A64",
+    "fontSize": 18,
+    "lineHeight": 2,
+    "design": "adaptive",
+    "theme": {
+      "label": "Ocean Breeze",
+      "layout": "classic",
+      "bg": "#F2F2F2",
+      "surface": "#E5E5EA",
+      "ink": "#455A64",
+      "muted": "#969696",
+      "accent": "#4CAF50",
+      "accentSoft": "#C9E4CA",
+      "border": "#DDDDDD",
+      "rule": "#E5E5EA",
+      "radius": 12,
+      "articlePadding": 45,
+      "mainWidth": 1120,
+      "heroScale": 1.05,
+      "fontStyle": "serif",
+      "shadow": "soft",
+      "visualKicker": "THE WIZARD",
+      "visualTitle": "THE SEA AND THE MAN",
+      "visualBody": "generated from the current page, its memory and this cycle"
+    }
+  }
+}
